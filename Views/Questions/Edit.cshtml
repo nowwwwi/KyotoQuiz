@@ -1,7 +1,8 @@
-﻿@model KyotoQuiz.Models.Question
+﻿@model KyotoQuiz.ViewModels.CreateQuestionViewModel
 
 @{
     ViewData["Title"] = "Edit";
+    ViewData["Check"] = "正解にチェック";
 }
 
 <h1>Edit</h1>
@@ -13,26 +14,74 @@
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
+            
+            <h5>問題の基本情報</h5>
+
             <div class="form-group">
                 <label asp-for="ImplementedId" class="control-label"></label>
                 <select asp-for="ImplementedId" class="form-control" asp-items="ViewBag.ImplementedId"></select>
-                <span asp-validation-for="ImplementedId" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="GenreId" class="control-label"></label>
                 <select asp-for="GenreId" class="form-control" asp-items="ViewBag.GenreId"></select>
-                <span asp-validation-for="GenreId" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Grade" class="control-label"></label>
-                <input asp-for="Grade" class="form-control" />
-                <span asp-validation-for="Grade" class="text-danger"></span>
+                <select asp-for="Grade" class="form-control" asp-items="ViewBag.Grade"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="Number" class="control-label"></label>
+                <input asp-for="Number" class="form-control" />
+                <span asp-validation-for="Number" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Content" class="control-label"></label>
                 <input asp-for="Content" class="form-control" />
                 <span asp-validation-for="Content" class="text-danger"></span>
             </div>
+
+            <hr />
+            <h5>選択肢情報</h5>
+
+            @{
+                if (ViewBag.HaveSomeAnswer)
+                {
+                    <p><a class="text-warning">正解を複数選択しています</a></p>
+                }
+            }
+
+            <div class="form-group">
+                <label asp-for="ContentOfOrderOne" class="control-label"></label>
+                <input type="checkbox" asp-for="IsOrderOneAnswer" />@ViewBag.Check
+                <input asp-for="ContentOfOrderOne" class="form-control" />
+                <span asp-validation-for="ContentOfOrderOne" class="text-danger"></span>
+            </div>
+
+
+            <div class="form-group">
+                <label asp-for="ContentOfOrderTwo" class="control-label"></label>
+                <input type="checkbox" asp-for="IsOrderTwoAnswer" />@ViewBag.Check
+                <input asp-for="ContentOfOrderTwo" class="form-control" />
+                <span asp-validation-for="ContentOfOrderTwo" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ContentOfOrderThree" class="control-label"></label>
+                <input type="checkbox" asp-for="IsOrderThreeAnswer" />@ViewBag.Check
+                <input asp-for="ContentOfOrderThree" class="form-control" />
+                <span asp-validation-for="ContentOfOrderThree" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ContentOfOrderFour" class="control-label"></label>
+                <input type="checkbox" asp-for="IsOrderFourAnswer" />@ViewBag.Check
+                <input asp-for="ContentOfOrderFour" class="form-control" />
+                <span asp-validation-for="ContentOfOrderFour" class="text-danger"></span>
+            </div>
+
+            <hr />
+            <h5>解説情報</h5>
+
             <div class="form-group">
                 <label asp-for="Description" class="control-label"></label>
                 <input asp-for="Description" class="form-control" />

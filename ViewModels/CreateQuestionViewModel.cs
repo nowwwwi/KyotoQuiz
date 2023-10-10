@@ -40,6 +40,16 @@ namespace KyotoQuiz.ViewModels
             };
         }
 
+        public bool ValidateAnswerCount()
+        {
+            var count = (IsOrderOneAnswer ? 1 : 0)
+                + (IsOrderTwoAnswer ? 1 : 0)
+                + (IsOrderThreeAnswer ? 1 : 0)
+                + (IsOrderFourAnswer ? 1 : 0);
+
+            return count == 1;
+        }
+
         public QuestionRecord CreateQuestionRecord(
             int order,
             int questionId,

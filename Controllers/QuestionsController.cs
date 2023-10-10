@@ -53,10 +53,7 @@ namespace KyotoQuiz.Controllers
         // GET: Questions/Create
         public IActionResult Create()
         {
-            ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Content");
-            ViewData["ImplementedId"] = new SelectList(_context.Implemented, "Id", "Times");
-            ViewData["Grade"] = new SelectList(Grades);
-
+            ReadyForCreateView(false);
             return View();
         }
 
@@ -72,6 +69,12 @@ namespace KyotoQuiz.Controllers
 
             model = await AssignValuesAsync(model);
 
+            if (!model.ValidateAnswerCount())
+            {
+                ReadyForCreateView(true);
+                return View(model);
+            }
+
             if (ModelState.IsValid)
             {
                 var question = model.ConvertToQuestion();
@@ -80,47 +83,54 @@ namespace KyotoQuiz.Controllers
 
                 var questionId = _context.Question.FirstOrDefault(q => q.Content == model.Content).Id;
 
+                var questionRecords = new List<QuestionRecord>();
+
                 for (int i=0; i< QuestionsNum; i++)
                 {
                     var record = model.CreateQuestionRecord(i+1, questionId, question);
-                    _context.Add(record);
-                    await _context.SaveChangesAsync();
+                    questionRecords.Add(record);
                 }
 
+                foreach(var record in questionRecords)
+                {
+                    _context.Add(record);
+                }
+
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Content", model.GenreId);
-            ViewData["ImplementedId"] = new SelectList(_context.Implemented, "Id", "Times", model.ImplementedId);
-
+            ReadyForCreateView(false, model);
             return View();
-        }
-
-        private async Task<CreateQuestionViewModel> AssignValuesAsync(CreateQuestionViewModel model)
-        {
-            model.Implemented = await _context.Implemented.FirstOrDefaultAsync(i => i.Id == model.ImplementedId);
-            model.Genre = await _context.Genre.FirstOrDefaultAsync(g => g.Id == model.GenreId);
-            model.Description ??= string.Empty;
-
-            return model;
         }
 
         // GET: Questions/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
+
             if (id == null || _context.Question == null)
             {
                 return NotFound();
             }
 
-            var question = await _context.Question.FindAsync(id);
+            var question = await _context.Question
+                .Include(q => q.Genre)
+                .Include(q => q.Implemented)
+                .FirstOrDefaultAsync(q => q.Id == id);
             if (question == null)
             {
                 return NotFound();
             }
-            ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Id", question.GenreId);
-            ViewData["ImplementedId"] = new SelectList(_context.Implemented, "Id", "Id", question.ImplementedId);
-            return View(question);
+
+            var records = await _context.QuestionRecord.Where(q => q.QuestionId == id).ToListAsync();
+            if (!records.Any())
+            {
+                return NotFound();
+            }
+
+            var viewModel = question.ConvertToViewModel(records);
+            ReadyForCreateView(false);
+            return View(viewModel);
         }
 
         // POST: Questions/Edit/5
@@ -128,23 +138,29 @@ namespace KyotoQuiz.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ImplementedId,GenreId,Grade,Content,Description")] Question question)
+        public async Task<IActionResult> Edit(
+            int id, 
+            [Bind(BindProperties)] CreateQuestionViewModel model)
         {
-            if (id != question.Id)
+            ModelState.Clear();
+
+            if (id != model.Id)
             {
                 return NotFound();
             }
+
+            model = await AssignValuesAsync(model);
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(question);
+                    //_context.Update(question);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!QuestionExists(question.Id))
+                    if (!QuestionExists(model.Id))
                     {
                         return NotFound();
                     }
@@ -155,9 +171,9 @@ namespace KyotoQuiz.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Id", question.GenreId);
-            ViewData["ImplementedId"] = new SelectList(_context.Implemented, "Id", "Id", question.ImplementedId);
-            return View(question);
+
+            ReadyForCreateView(false, model);
+            return View(model);
         }
 
         // GET: Questions/Delete/5
@@ -202,6 +218,33 @@ namespace KyotoQuiz.Controllers
         private bool QuestionExists(int id)
         {
           return (_context.Question?.Any(e => e.Id == id)).GetValueOrDefault();
+        }
+
+        private async Task<CreateQuestionViewModel> AssignValuesAsync(CreateQuestionViewModel model)
+        {
+            model.Implemented = await _context.Implemented.FirstOrDefaultAsync(i => i.Id == model.ImplementedId);
+            model.Genre = await _context.Genre.FirstOrDefaultAsync(g => g.Id == model.GenreId);
+            model.Description ??= string.Empty;
+
+            return model;
+        }
+
+        private void ReadyForCreateView(bool haveSomeAnswer, CreateQuestionViewModel? model = null)
+        {
+            if (model == null)
+            {
+                ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Content");
+                ViewData["ImplementedId"] = new SelectList(_context.Implemented, "Id", "Times");
+                ViewData["Grade"] = new SelectList(Grades);
+                ViewData["HaveSomeAnswer"] = haveSomeAnswer;
+
+                return;
+            }
+
+            ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Content", model.GenreId);
+            ViewData["ImplementedId"] = new SelectList(_context.Implemented, "Id", "Times", model.ImplementedId);
+            ViewData["Grade"] = new SelectList(Grades);
+            ViewData["HaveSomeAnswer"] = haveSomeAnswer;
         }
     }
 }
