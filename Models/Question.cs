@@ -16,6 +16,8 @@ namespace KyotoQuiz.Models
 
         public int Grade {  get; set; }
 
+        public int Number {  get; set; }
+
         [Required]
         public string Content { get; set; }
 
