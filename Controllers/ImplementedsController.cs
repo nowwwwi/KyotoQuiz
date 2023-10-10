@@ -23,7 +23,7 @@ namespace KyotoQuiz.Controllers
         public async Task<IActionResult> Index()
         {
               return _context.Implemented != null ? 
-                          View(await _context.Implemented.ToListAsync()) :
+                          View(await _context.Implemented.OrderBy(i => i.Year).ToListAsync()) :
                           Problem("Entity set 'KyotoQuizContext.Implemented'  is null.");
         }
 
