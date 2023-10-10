@@ -15,5 +15,13 @@ namespace KyotoQuiz.Data
         }
 
         public DbSet<KyotoQuiz.Models.Genre> Genre { get; set; } = default!;
+
+        public DbSet<KyotoQuiz.Models.Implemented> Implemented { get; set; } = default!;
+
+        public DbSet<KyotoQuiz.Models.Question> Question { get; set; } = default!;
+
+        public DbSet<KyotoQuiz.Models.QuestionRecord> QuestionRecord { get; set; } = default!;
+
+        public DbSet<KyotoQuiz.Models.Result> Result { get; set; } = default!;
     }
 }
