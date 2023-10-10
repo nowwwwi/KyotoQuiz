@@ -29,6 +29,7 @@ namespace KyotoQuiz.ViewModels
         {
             return new Question
             {
+                Id = Id,
                 ImplementedId = ImplementedId,
                 GenreId = GenreId,
                 Grade = Grade,

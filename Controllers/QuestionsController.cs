@@ -117,6 +117,7 @@ namespace KyotoQuiz.Controllers
                 .Include(q => q.Genre)
                 .Include(q => q.Implemented)
                 .FirstOrDefaultAsync(q => q.Id == id);
+
             if (question == null)
             {
                 return NotFound();
@@ -151,11 +152,55 @@ namespace KyotoQuiz.Controllers
 
             model = await AssignValuesAsync(model);
 
+            if (!model.ValidateAnswerCount())
+            {
+                ReadyForCreateView(true);
+                return View(model);
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    //_context.Update(question);
+                    var oldQuestion = _context.Question.FirstOrDefault(q => q.Id == id);
+                    var newQuestion = model.ConvertToQuestion();
+
+                    if (newQuestion != null)
+                    {
+                        oldQuestion.ImplementedId = newQuestion.ImplementedId;
+                        oldQuestion.GenreId = newQuestion.GenreId;
+                        oldQuestion.Grade = newQuestion.Grade;
+                        oldQuestion.Number = newQuestion.Number;
+                        oldQuestion.Content = newQuestion.Content;
+                        oldQuestion.Description = newQuestion.Description;
+                    }
+
+                    _context.Update(oldQuestion);
+                    _context.SaveChanges();
+
+                    var oldQuestionRecords = _context.QuestionRecord.Where(q => q.QuestionId == id);
+                    var newQuestionRecords = new List<QuestionRecord>();
+
+                    for (int i = 0; i < QuestionsNum; i++)
+                    {
+                        var record = model.CreateQuestionRecord(i + 1, id, oldQuestion);
+                        newQuestionRecords.Add(record);
+                    }
+
+                    foreach (var record in oldQuestionRecords)
+                    {
+                        var correspondingNewRecord = newQuestionRecords
+                            .FirstOrDefault(q => q.OrderOfQuestion == record.OrderOfQuestion);
+
+                        if (correspondingNewRecord != null)
+                        {
+                            record.Content = correspondingNewRecord.Content;
+                            record.IsAnswer = correspondingNewRecord.IsAnswer;
+                        }
+
+                        _context.Update(record);
+                    }
+
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -169,6 +214,7 @@ namespace KyotoQuiz.Controllers
                         throw;
                     }
                 }
+
                 return RedirectToAction(nameof(Index));
             }
 
@@ -229,7 +275,9 @@ namespace KyotoQuiz.Controllers
             return model;
         }
 
-        private void ReadyForCreateView(bool haveSomeAnswer, CreateQuestionViewModel? model = null)
+        private void ReadyForCreateView(
+            bool haveSomeAnswer, 
+            CreateQuestionViewModel? model = null)
         {
             if (model == null)
             {
