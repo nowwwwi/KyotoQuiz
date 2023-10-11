@@ -1,0 +1,3 @@
+﻿Id,ImplementedId,GenreId,Grade,Number,Content,Description,ContentOfOrderOne,IsOrderOneAnswer,ContentOfOrderTwo,IsOrderTwoAnswer,ContentOfOrderThree,IsOrderThreeAnswer,ContentOfOrderFour,IsOrderFourAnswer
+,1,1,2,1,"問題1の内容","問題1の説明","選択肢1",true,"選択肢2",false,"選択肢3",false,"選択肢4",false
+,2,2,3,2,"問題2の内容","問題2の説明","選択肢A",true,"選択肢B",false,"選択肢C",false,"選択肢D",false

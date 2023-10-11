@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Create from CSV file.";
+    ViewData["EndPoint"] = "http://localhost:7265/api/UploadCsv";
 }
 
 <h1>@ViewBag.Title</h1>
@@ -11,9 +12,9 @@
 <body>
     <h5>CSVファイルをアップロード</h5>
 
-    <form action="/YourUploadEndpoint" method="post" enctype="multipart/form-data">
+    <form asp-action="CreateFromCsv" method="post" enctype="multipart/form-data">
         <input type="file" name="csvFile" accept=".csv">
-        <input type="submit" value="Upload">
+        <input type="submit" value="Upload" class="btn btn-primary">
     </form>
 </body>
 

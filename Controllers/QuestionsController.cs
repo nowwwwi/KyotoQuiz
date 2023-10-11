@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using KyotoQuiz.Data;
 using KyotoQuiz.Models;
 using KyotoQuiz.ViewModels;
+using System.Runtime.InteropServices;
 
 namespace KyotoQuiz.Controllers
 {
@@ -123,8 +124,33 @@ namespace KyotoQuiz.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreateFromCsv(string path)
+        public async Task<IActionResult> CreateFromCsv(IFormFile csvFile)
         {
+            if (csvFile == null || csvFile.Length == 0)
+            {
+                ViewData["UploadSuccess"] = false;
+                return View();
+            }
+
+            var viewModels = new List<CreateQuestionViewModel>();
+
+            using (var streamReader = new StreamReader(csvFile.OpenReadStream()))
+            {
+                var csvContent = await streamReader.ReadToEndAsync();
+                var lines = csvContent.Split('\n');
+
+                foreach (var line in lines)
+                {
+                    var columns = line.Split(',');
+                    var viewModel = new CreateQuestionViewModel()
+                    {
+
+                    };
+
+                    viewModels.Add(viewModel);
+                }
+            }
+
             return View();
         }
 
