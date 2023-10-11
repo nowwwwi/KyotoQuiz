@@ -9,6 +9,16 @@
 
 <h4>Question</h4>
 <hr />
+
+@{
+    if (ViewBag.HaveSomeAnswer)
+    {
+        <div class="alert alert-warning" role="alert">
+            正解を複数選択しています!
+        </div>
+    }
+}
+
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Edit">
@@ -42,14 +52,6 @@
 
             <hr />
             <h5>選択肢情報</h5>
-
-            @{
-                if (ViewBag.HaveSomeAnswer)
-                {
-                    <p><a class="text-warning">正解を複数選択しています</a></p>
-                }
-            }
-
             <div class="form-group">
                 <label asp-for="ContentOfOrderOne" class="control-label"></label>
                 <input type="checkbox" asp-for="IsOrderOneAnswer" />@ViewBag.Check

@@ -14,6 +14,7 @@ namespace KyotoQuiz.Controllers
     public class QuestionsController : Controller
     {
         private readonly KyotoQuizContext _context;
+
         private readonly List<int> Grades = new() { 1, 2, 3 };
         private const int QuestionsNum = 4;
         private const string BindProperties = "Id,ImplementedId,GenreId,Grade,Number,Content,ContentOfOrderOne,IsOrderOneAnswer,ContentOfOrderTwo,IsOrderTwoAnswer,ContentOfOrderThree,IsOrderThreeAnswer,ContentOfOrderFour,IsOrderFourAnswer,Description";
@@ -27,7 +28,18 @@ namespace KyotoQuiz.Controllers
         public async Task<IActionResult> Index()
         {
             var kyotoQuizContext = _context.Question.Include(q => q.Genre).Include(q => q.Implemented);
-            return View(await kyotoQuizContext.ToListAsync());
+            var questions = await kyotoQuizContext.ToListAsync();
+            var viewModels = new List<CreateQuestionViewModel>();
+
+            foreach(var question in questions)
+            {
+                var records = await _context.QuestionRecord.Where(q => q.QuestionId == question.Id).ToListAsync();
+                var viewModel = question.ConvertToViewModel(records);
+                await AssignValuesAsync(viewModel);
+                viewModels.Add(viewModel);
+            }
+
+            return View(viewModels);
         }
 
         // GET: Questions/Details/5
@@ -165,7 +177,7 @@ namespace KyotoQuiz.Controllers
                     var oldQuestion = _context.Question.FirstOrDefault(q => q.Id == id);
                     var newQuestion = model.ConvertToQuestion();
 
-                    if (newQuestion != null)
+                    if (oldQuestion != null && newQuestion != null)
                     {
                         oldQuestion.ImplementedId = newQuestion.ImplementedId;
                         oldQuestion.GenreId = newQuestion.GenreId;

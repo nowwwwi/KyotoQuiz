@@ -5,22 +5,22 @@ namespace KyotoQuiz.ViewModels
 {
     public class CreateQuestionViewModel : Question
     {
-        [DisplayName("(ア)の回答")]
+        [DisplayName("(ア)")]
         public string ContentOfOrderOne {  get; set; }
 
         public bool IsOrderOneAnswer { get; set; } = false;
 
-        [DisplayName("(イ)の回答")]
+        [DisplayName("(イ)")]
         public string ContentOfOrderTwo { get; set; }
 
         public bool IsOrderTwoAnswer { get; set; } = false;
 
-        [DisplayName("(ウ)の回答")]
+        [DisplayName("(ウ)")]
         public string ContentOfOrderThree { get; set; }
 
         public bool IsOrderThreeAnswer { get; set; } = false;
 
-        [DisplayName("(エ)の回答")]
+        [DisplayName("(エ)")]
         public string ContentOfOrderFour { get; set; }
 
         public bool IsOrderFourAnswer { get; set; } = false;
