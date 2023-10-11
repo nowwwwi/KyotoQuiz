@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using KyotoQuiz.Data;
 using KyotoQuiz.Models;
+using KyotoQuiz.ViewModels;
+using KyotoQuiz.Enum;
 
 namespace KyotoQuiz.Controllers
 {
@@ -14,8 +16,13 @@ namespace KyotoQuiz.Controllers
     {
         private readonly KyotoQuizContext _context;
 
+        private const string BindProperties = "Id,QuestionId,SelectedOrder,IsCorrect,Created,ImplementedId,GenreId,Grade,Number,Content," +
+            "Description,ContentOfOrderOne,IsOrderOneAnswer,ContentOfOrderTwo,IsOrderTwoAnswer,ContentOfOrderThree,IsOrderThreeAnswer," +
+            "ContentOfOrderFour,IsOrderFourAnswer";
+
         public ResultsController(KyotoQuizContext context)
         {
+            ViewData["Status"] = AnswerStatus.Unanswered;
             _context = context;
         }
 
@@ -46,10 +53,26 @@ namespace KyotoQuiz.Controllers
         }
 
         // GET: Results/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create(int? id)
         {
-            ViewData["QuestionId"] = new SelectList(_context.Question, "Id", "Id");
-            return View();
+
+            var question = await _context.Question
+                .Include(q => q.Genre)
+                .Include(q => q.Implemented)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            var records = await _context.QuestionRecord.Where(q => q.QuestionId == id).ToListAsync();
+
+            if (question == null || !records.Any())
+            {
+                return NotFound();
+            }
+
+            var viewModel = new ResultViewModel(question, records);
+
+            ViewData["QuestionId"] = new SelectList(_context.Question, "Id", "Content");
+
+            return View(viewModel);
         }
 
         // POST: Results/Create
@@ -57,17 +80,35 @@ namespace KyotoQuiz.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,QuestionId,SelectedOrder,IsCorrect,Created")] Result result)
+        public async Task<IActionResult> Create(
+            int? id,
+            [Bind("QuestionId,SelectedOrder,IsCorrect,Created,Question")] Result result)
         {
+            ModelState.Clear();
+
+            var correctOrder = await _context.QuestionRecord.FirstOrDefaultAsync(q => q.QuestionId == id && q.IsAnswer);
+
+            if (correctOrder == null)
+            {
+                return NotFound();
+            }
+
+            result.Question = await _context.Question.FirstOrDefaultAsync(q => q.Id == id);
+            result.IsCorrect = result.SelectedOrder == correctOrder.OrderOfQuestion;
+
             if (ModelState.IsValid)
             {
+                ViewData["Status"] = result.IsCorrect ? AnswerStatus.Correct : AnswerStatus.Incorrect;
                 _context.Add(result);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return await Create(id);
             }
+
             ViewData["QuestionId"] = new SelectList(_context.Question, "Id", "Id", result.QuestionId);
             return View(result);
         }
+
+
 
         // GET: Results/Edit/5
         public async Task<IActionResult> Edit(int? id)

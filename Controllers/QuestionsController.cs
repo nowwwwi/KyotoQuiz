@@ -116,6 +116,18 @@ namespace KyotoQuiz.Controllers
             return View();
         }
 
+        // GET: Results/CreateFromCsv
+        public IActionResult CreateFromCsv()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult CreateFromCsv(string path)
+        {
+            return View();
+        }
+
         // GET: Questions/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {

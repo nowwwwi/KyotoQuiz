@@ -1,0 +1,28 @@
+﻿@model KyotoQuiz.ViewModels.CreateQuestionViewModel
+
+@{
+    ViewData["Title"] = "Create from CSV file.";
+}
+
+<h1>@ViewBag.Title</h1>
+
+<h4>Import from csv</h4>
+<hr />
+<body>
+    <h5>CSVファイルをアップロード</h5>
+
+    <form action="/YourUploadEndpoint" method="post" enctype="multipart/form-data">
+        <input type="file" name="csvFile" accept=".csv">
+        <input type="submit" value="Upload">
+    </form>
+</body>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

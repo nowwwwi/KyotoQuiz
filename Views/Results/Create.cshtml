@@ -1,45 +1,106 @@
-﻿@model KyotoQuiz.Models.Result
+﻿@using KyotoQuiz.Enum;
+@model KyotoQuiz.ViewModels.ResultViewModel
 
 @{
     ViewData["Title"] = "Create";
+    ViewData["ImplementedData"] = "実施回情報";
+    int beforeQuestionId = Model.QuestionId - 1;
+    int nextQuestionId = Model.QuestionId + 1;
 }
 
-<h1>Create</h1>
+<h1>@ViewBag.Title</h1>
 
 <h4>Result</h4>
 <hr />
+
+@{
+    if (ViewBag.Status == AnswerStatus.Correct)
+    {
+        <div class="alert alert-success" role="alert">
+            正解!!
+        </div>
+    }
+
+    if (ViewBag.Status == AnswerStatus.Incorrect)
+    {
+        <div class="alert alert-danger" role="alert">
+            不正解...
+        </div>
+    }
+}
+
+<div>
+    <h4>Question</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @ViewBag.ImplementedData
+        </dt>
+        <dd class="col-sm-10">
+            第 @Html.DisplayFor(model => model.Implemented.Times) 回 (@Html.DisplayFor(model => model.Implemented.Year) 年) @Html.DisplayFor(model => model.Grade) 級 第 @Html.DisplayFor(model => model.Number) 問
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Genre)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Genre.Content)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Content)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Content)
+        </dd>
+    </dl>
+</div>
+
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="QuestionId" value="@Model.QuestionId" />
+            <input type="hidden" asp-for="Created" value="@DateTime.UtcNow"/>
+            <input type="hidden" asp-for="IsCorrect"/>
+            
             <div class="form-group">
-                <label asp-for="QuestionId" class="control-label"></label>
-                <select asp-for="QuestionId" class ="form-control" asp-items="ViewBag.QuestionId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="SelectedOrder" class="control-label"></label>
-                <input asp-for="SelectedOrder" class="form-control" />
+                <label asp-for="SelectedOrder" class="control-label">回答を選択してください</label>
+                <div>
+                    <label>
+                        <input type="radio" asp-for="SelectedOrder" value="1" />
+                        @Html.DisplayNameFor(model => model.ContentOfOrderOne) @Html.DisplayFor(model => model.ContentOfOrderOne)
+                    </label>
+                    <label>
+                        <input type="radio" asp-for="SelectedOrder" value="2" />
+                        @Html.DisplayNameFor(model => model.ContentOfOrderTwo) @Html.DisplayFor(model => model.ContentOfOrderTwo)
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        <input type="radio" asp-for="SelectedOrder" value="3" />
+                        @Html.DisplayNameFor(model => model.ContentOfOrderThree) @Html.DisplayFor(model => model.ContentOfOrderThree)
+                    </label>
+                    <label>
+                        <input type="radio" asp-for="SelectedOrder" value="4" />
+                        @Html.DisplayNameFor(model => model.ContentOfOrderFour) @Html.DisplayFor(model => model.ContentOfOrderFour)
+                    </label>
+                </div>
                 <span asp-validation-for="SelectedOrder" class="text-danger"></span>
             </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="IsCorrect" /> @Html.DisplayNameFor(model => model.IsCorrect)
-                </label>
-            </div>
+
             <div class="form-group">
-                <label asp-for="Created" class="control-label"></label>
-                <input asp-for="Created" class="form-control" />
-                <span asp-validation-for="Created" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <input type="submit" value="Answer" class="btn btn-primary" />
             </div>
         </form>
     </div>
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-controller="Questions" asp-action="Index">Back to List</a>
+</div>
+
+<div>
+    <a asp-controller="Results" asp-action="Create" asp-route-id="@beforeQuestionId">Before Question</a>
+    <a asp-controller="Results" asp-action="Create" asp-route-id="@nextQuestionId">Next Question</a>
 </div>
 
 @section Scripts {
