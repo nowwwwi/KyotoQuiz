@@ -4,124 +4,158 @@
 
 @{
     ViewData["Title"] = "Index";
+    ViewData["SelectAll"] = "全てを対象にする";
 }
 
 <h1>@ViewBag.Title</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
+<form asp-action="Create">
+    <input type="submit" value="新規作成" class="btn btn-primary">
+</form>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Implemented)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Grade)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Genre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Content)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ContentOfOrderOne)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ContentOfOrderTwo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ContentOfOrderThree)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ContentOfOrderFour)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Implemented.Year) 年 第 @Html.DisplayFor(modelItem => item.Implemented.Times) 回
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Grade) 級
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Genre.Content)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Content)
-            </td>
-            <td>
-                    @{
-                        if (item.IsOrderOneAnswer)
-                        {
-                            <div class="text-primary">@Html.DisplayFor(modelItem => item.ContentOfOrderOne)</div>
+<hr>
 
-                        }
-                        else
-                        {
-                            @Html.DisplayFor(modelItem => item.ContentOfOrderOne)
-                        }
-                    }
-            </td>
-            <td>
-                    @{
-                        if (item.IsOrderTwoAnswer)
-                        {
-                            <div class="text-primary">@Html.DisplayFor(modelItem => item.ContentOfOrderTwo)</div>
+<form asp-action="Filter" method="get">
+    <div class="form-group">
+        <label class="control-label">Times</label>
+        <select class="form-control" asp-items="ViewBag.ImplementedId" name="implementedId">
+            <option value="-1">@ViewBag.SelectAll</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label class="control-label">Grade</label>
+        <select class="form-control" asp-items="ViewBag.Grade" name="grade">
+            <option value="-1">@ViewBag.SelectAll</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label class="control-label">Genre</label>
+        <select class="form-control" asp-items="ViewBag.GenreId" name="genreId">
+            <option value="-1">@ViewBag.SelectAll</option>
+        </select>
+    </div>
+    <br>
+    <input type="submit" value="Filter" class="btn btn-secondary" />
+</form>
 
-                        }
-                        else
-                        {
-                            @Html.DisplayFor(modelItem => item.ContentOfOrderTwo)
-                        }
-                    }
-            </td>
-            <td>
-                    @{
-                        if (item.IsOrderThreeAnswer)
-                        {
-                            <div class="text-primary">@Html.DisplayFor(modelItem => item.ContentOfOrderThree)</div>
+<hr>
 
-                        }
-                        else
-                        {
-                            @Html.DisplayFor(modelItem => item.ContentOfOrderThree)
-                        }
-                    }
-            </td>
-            <td>
-                    @{
-                        if (item.IsOrderFourAnswer)
-                        {
-                            <div class="text-primary">@Html.DisplayFor(modelItem => item.ContentOfOrderFour)</div>
+<!--
+<button class="btn btn-primary" id="toggleTableButton" onclick="toggleTable()">
+    Toggle Table
+</button>
+-->
 
+    <table class="table" id="resultTable">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.Implemented)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Grade)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Genre)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Content)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.ContentOfOrderOne)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.ContentOfOrderTwo)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.ContentOfOrderThree)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.ContentOfOrderFour)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Description)
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+    @foreach (var item in Model) {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Implemented.Year) 年 第 @Html.DisplayFor(modelItem => item.Implemented.Times) 回
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Grade) 級
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Genre.Content)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Content)
+                </td>
+                <td>
+                        @{
+                            if (item.IsOrderOneAnswer)
+                            {
+                                <div class="text-primary">@Html.DisplayFor(modelItem => item.ContentOfOrderOne)</div>
+
+                            }
+                            else
+                            {
+                                @Html.DisplayFor(modelItem => item.ContentOfOrderOne)
+                            }
                         }
-                        else
-                        {
-                            @Html.DisplayFor(modelItem => item.ContentOfOrderFour)
+                </td>
+                <td>
+                        @{
+                            if (item.IsOrderTwoAnswer)
+                            {
+                                <div class="text-primary">@Html.DisplayFor(modelItem => item.ContentOfOrderTwo)</div>
+
+                            }
+                            else
+                            {
+                                @Html.DisplayFor(modelItem => item.ContentOfOrderTwo)
+                            }
                         }
-                    }
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a> |
-                <a asp-controller="Results" asp-action="Create" asp-route-id="@item.Id">Exam</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+                </td>
+                <td>
+                        @{
+                            if (item.IsOrderThreeAnswer)
+                            {
+                                <div class="text-primary">@Html.DisplayFor(modelItem => item.ContentOfOrderThree)</div>
+
+                            }
+                            else
+                            {
+                                @Html.DisplayFor(modelItem => item.ContentOfOrderThree)
+                            }
+                        }
+                </td>
+                <td>
+                        @{
+                            if (item.IsOrderFourAnswer)
+                            {
+                                <div class="text-primary">@Html.DisplayFor(modelItem => item.ContentOfOrderFour)</div>
+
+                            }
+                            else
+                            {
+                                @Html.DisplayFor(modelItem => item.ContentOfOrderFour)
+                            }
+                        }
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Description)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a> |
+                    <a asp-controller="Results" asp-action="Create" asp-route-id="@item.Id">Exam</a>
+                </td>
+            </tr>
+    }
+        </tbody>
+    </table>

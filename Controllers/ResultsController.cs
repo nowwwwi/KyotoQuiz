@@ -23,6 +23,7 @@ namespace KyotoQuiz.Controllers
         public ResultsController(KyotoQuizContext context)
         {
             ViewData["Status"] = AnswerStatus.Unanswered;
+            ViewData["ShowDetail"] = false;
             _context = context;
         }
 

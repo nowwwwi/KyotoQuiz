@@ -1,0 +1,36 @@
+﻿@{
+    ViewData["Title"] = "Filter";
+    ViewData["SelectAll"] = "全てを対象にする";
+}
+
+<h1>@ViewBag.Title</h1>
+
+<div class="alert alert-danger" role="alert">
+    レコードの検索に失敗しました。再検索してください。
+</div>
+
+<form asp-action="Filter" method="get">
+    <div class="form-group">
+        <label class="control-label">Times</label>
+        <select class="form-control" asp-items="ViewBag.ImplementedId" name="implementedId">
+            <option value="-1">@ViewBag.SelectAll</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label class="control-label">Grade</label>
+        <select class="form-control" asp-items="ViewBag.Grade" name="grade">
+            <option value="-1">@ViewBag.SelectAll</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label class="control-label">Genre</label>
+        <select class="form-control" asp-items="ViewBag.GenreId" name="genreId">
+            <option value="-1">@ViewBag.SelectAll</option>
+        </select>
+    </div>
+    <input type="submit" value="Filter" />
+</form>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>

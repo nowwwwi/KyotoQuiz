@@ -23,6 +23,7 @@ namespace KyotoQuiz.Controllers
         public QuestionsController(KyotoQuizContext context)
         {
             _context = context;
+            ViewData["HaveSomeAnswer"] = false;
         }
 
         // GET: Questions
@@ -40,7 +41,72 @@ namespace KyotoQuiz.Controllers
                 viewModels.Add(viewModel);
             }
 
+            ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Content");
+            ViewData["ImplementedId"] = new SelectList(_context.Implemented, "Id", "Times");
+            ViewData["Grade"] = new SelectList(Grades);
+
             return View(viewModels);
+        }
+
+        public async Task<IActionResult> Filter(int implementedId, int grade, int genreId)
+        {
+            var kyotoQuizContext = _context.Question
+                .Include(q => q.Genre)
+                .Include(q => q.Implemented);
+            var questions = await kyotoQuizContext.ToListAsync();
+            var filtered = GetFilterdList(questions, implementedId, grade, genreId);
+
+            if (!filtered.Any())
+            {
+                ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Content");
+                ViewData["ImplementedId"] = new SelectList(_context.Implemented, "Id", "Times");
+                ViewData["Grade"] = new SelectList(Grades);
+
+                return View();
+            }
+
+            var viewModels = new List<CreateQuestionViewModel>();
+
+            foreach (var question in filtered)
+            {
+                var records = await _context.QuestionRecord
+                    .Where(q => q.QuestionId == question.Id)
+                    .ToListAsync();
+                var viewModel = question.ConvertToViewModel(records);
+                await AssignValuesAsync(viewModel);
+                viewModels.Add(viewModel);
+            }
+
+            ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Content");
+            ViewData["ImplementedId"] = new SelectList(_context.Implemented, "Id", "Times");
+            ViewData["Grade"] = new SelectList(Grades);
+
+            return View("Index",viewModels);
+        }
+
+        private static List<Question> GetFilterdList(List<Question> questions, int implementedId, int grade, int genreId)
+        {
+            if (implementedId == -1 && grade == -1 && genreId == -1)
+            {
+                return questions;
+            }
+
+            if (implementedId != -1)
+            {
+                questions = questions.Where(q => q.ImplementedId == implementedId).ToList();
+            }
+
+            if (grade != -1)
+            {
+                questions = questions.Where(q => q.Grade == grade).ToList();
+            }
+
+            if (genreId != -1)
+            {
+                questions = questions.Where(q => q.GenreId == genreId).ToList();
+            }
+
+            return questions;
         }
 
         // GET: Questions/Details/5

@@ -20,3 +20,16 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.left-button {
+    margin-right: auto;
+}
+
+.right-button {
+    margin-left: auto;
+}

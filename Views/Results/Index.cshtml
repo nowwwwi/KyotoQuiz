@@ -1,15 +1,26 @@
 ﻿@model IEnumerable<KyotoQuiz.Models.Result>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "解答状況";
+    var total = Model.Count();
+    var correct = Model.Where(m => m.IsCorrect).Count();
+    double accuracy = (double)correct / total * 100;
 }
 
-<h1>Index</h1>
+<h1>@ViewBag.Title</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
+<div class="alert alert-primary" role="alert">
+    現在 @total 問解きました。<br>
+    現在の正答率は @accuracy.ToString() %です。
+</div>
+
+<!--
+<button class="btn btn-primary" id="toggleTableButton" onclick="toggleTable()">
+    Toggle Table
+</button>
+-->
+
+<table class="table" id="resultTable">
     <thead>
         <tr>
             <th>
@@ -51,3 +62,9 @@
 }
     </tbody>
 </table>
+
+<hr>
+
+<form asp-action="Delete">
+    <input type="submit" value="履歴の全削除" class="btn btn-danger">
+</form>
