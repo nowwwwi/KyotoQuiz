@@ -35,5 +35,48 @@ namespace KyotoQuiz.Helpers
                 oldQuestion.Description = newQuestion.Description;
             }
         }
+
+        public static QuestionRecord GetQuestionRecord(
+            int order,
+            Question question,
+            QuestionViewModel model)
+        {
+            return order switch
+            {
+                1 => new QuestionRecord
+                {
+                    QuestionId = question.Id,
+                    OrderOfQuestion = 1,
+                    Content = model.ContentOfOrderOne,
+                    IsAnswer = model.IsOrderOneAnswer,
+                    Question = question
+                },
+                2 => new QuestionRecord
+                {
+                    QuestionId = question.Id,
+                    OrderOfQuestion = 2,
+                    Content = model.ContentOfOrderTwo,
+                    IsAnswer = model.IsOrderTwoAnswer,
+                    Question = question
+                },
+                3 => new QuestionRecord
+                {
+                    QuestionId = question.Id,
+                    OrderOfQuestion = 3,
+                    Content = model.ContentOfOrderThree,
+                    IsAnswer = model.IsOrderThreeAnswer,
+                    Question = question
+                },
+                4 => new QuestionRecord
+                {
+                    QuestionId = question.Id,
+                    OrderOfQuestion = 4,
+                    Content = model.ContentOfOrderFour,
+                    IsAnswer = model.IsOrderFourAnswer,
+                    Question = question
+                },
+                _ => new(),
+            };
+        }
     }
 }

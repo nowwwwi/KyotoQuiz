@@ -1,12 +1,17 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using KyotoQuiz.Data;
+using KyotoQuiz.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<KyotoQuizContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("KyotoQuizContext") ?? throw new InvalidOperationException("Connection string 'KyotoQuizContext' not found.")));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddTransient<IQuestionService, QuestionService>();
+builder.Services.AddTransient<IQuestionRecordService, QuestionRecordService>();
 
 var app = builder.Build();
 

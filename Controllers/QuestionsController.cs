@@ -10,20 +10,28 @@ using KyotoQuiz.Models;
 using KyotoQuiz.ViewModels;
 using System.Runtime.InteropServices;
 using KyotoQuiz.Helpers;
+using KyotoQuiz.Services;
 
 namespace KyotoQuiz.Controllers
 {
     public class QuestionsController : Controller
     {
         private readonly KyotoQuizContext _context;
+        private readonly IQuestionService _questionService;
+        private readonly IQuestionRecordService _recordService;
 
         private readonly List<int> Grades = new() { 1, 2, 3 };
         private const int QuestionsNum = 4;
         private const string BindProperties = "Id,ImplementedId,GenreId,Grade,Number,Content,ContentOfOrderOne,IsOrderOneAnswer,ContentOfOrderTwo,IsOrderTwoAnswer,ContentOfOrderThree,IsOrderThreeAnswer,ContentOfOrderFour,IsOrderFourAnswer,Description";
 
-        public QuestionsController(KyotoQuizContext context)
+        public QuestionsController(
+            KyotoQuizContext context,
+            IQuestionService questionService,
+            IQuestionRecordService questionRecordService)
         {
             _context = context;
+            _questionService = questionService;
+            _recordService = questionRecordService;
             ViewData["HaveSomeAnswer"] = false;
         }
 
@@ -38,7 +46,7 @@ namespace KyotoQuiz.Controllers
             {
                 var records = await _context.QuestionRecord.Where(q => q.QuestionId == question.Id).ToListAsync();
                 var viewModel = ViewModelHelper.GetQuestionViewModel(question, records);
-                await AssignValuesAsync(viewModel);
+                await _questionService.AssignmentViewModel(viewModel);
                 viewModels.Add(viewModel);
             }
 
@@ -51,9 +59,7 @@ namespace KyotoQuiz.Controllers
 
         public async Task<IActionResult> Filter(int implementedId, int grade, int genreId)
         {
-            var kyotoQuizContext = _context.Question
-                .Include(q => q.Genre)
-                .Include(q => q.Implemented);
+            var kyotoQuizContext = _context.Question.Include(q => q.Genre).Include(q => q.Implemented);
             var questions = await kyotoQuizContext.ToListAsync();
 
             var option = new QuizOption()
@@ -78,11 +84,9 @@ namespace KyotoQuiz.Controllers
 
             foreach (var question in filtered)
             {
-                var records = await _context.QuestionRecord
-                    .Where(q => q.QuestionId == question.Id)
-                    .ToListAsync();
+                var records = await _context.QuestionRecord.Where(q => q.QuestionId == question.Id).ToListAsync();
                 var viewModel = ViewModelHelper.GetQuestionViewModel(question, records);
-                await AssignValuesAsync(viewModel);
+                await _questionService.AssignmentViewModel(viewModel);
                 viewModels.Add(viewModel);
             }
 
@@ -130,7 +134,7 @@ namespace KyotoQuiz.Controllers
         {
             ModelState.Clear();
 
-            model = await AssignValuesAsync(model);
+            model = await _questionService.AssignmentViewModel(model);
 
             if (!ValidationHelper.IsValidAnswerCount(model))
             {
@@ -138,33 +142,28 @@ namespace KyotoQuiz.Controllers
                 return View(model);
             }
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var question = ModelHelper.GetQuestionFromViewModel(model);
-                _context.Add(question);
-                _context.SaveChanges();
-
-                var questionId = _context.Question.FirstOrDefault(q => q.Content == model.Content).Id;
-
-                var questionRecords = new List<QuestionRecord>();
-
-                for (int i=0; i< QuestionsNum; i++)
-                {
-                    var record = model.CreateQuestionRecord(i+1, questionId, question);
-                    questionRecords.Add(record);
-                }
-
-                foreach(var record in questionRecords)
-                {
-                    _context.Add(record);
-                }
-
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                ReadyForCreateView(false, model);
+                return View();
             }
 
-            ReadyForCreateView(false, model);
-            return View();
+            _questionService.SaveQuestion(model);
+
+            var question = _context.Question.FirstOrDefault(q => q.Content == model.Content);
+
+            if (question == null)
+            {
+                return NotFound();
+            }
+
+            if (!await _recordService.SaveRecords(question, model))
+            {
+                ReadyForCreateView(false, model);
+                return View();
+            }
+            
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Results/CreateFromCsv
@@ -250,7 +249,7 @@ namespace KyotoQuiz.Controllers
                 return NotFound();
             }
 
-            model = await AssignValuesAsync(model);
+            model = await _questionService.AssignmentViewModel(model);
 
             if (!ValidationHelper.IsValidAnswerCount(model))
             {
@@ -275,7 +274,7 @@ namespace KyotoQuiz.Controllers
 
                     for (int i = 0; i < QuestionsNum; i++)
                     {
-                        var record = model.CreateQuestionRecord(i + 1, id, oldQuestion);
+                        var record = ModelHelper.GetQuestionRecord(i + 1, oldQuestion, model);
                         newQuestionRecords.Add(record);
                     }
 
@@ -356,15 +355,6 @@ namespace KyotoQuiz.Controllers
         private bool QuestionExists(int id)
         {
           return (_context.Question?.Any(e => e.Id == id)).GetValueOrDefault();
-        }
-
-        private async Task<QuestionViewModel> AssignValuesAsync(QuestionViewModel model)
-        {
-            model.Implemented = await _context.Implemented.FirstOrDefaultAsync(i => i.Id == model.ImplementedId);
-            model.Genre = await _context.Genre.FirstOrDefaultAsync(g => g.Id == model.GenreId);
-            model.Description ??= string.Empty;
-
-            return model;
         }
 
         private void ReadyForCreateView(
