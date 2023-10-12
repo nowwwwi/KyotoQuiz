@@ -9,22 +9,27 @@ using KyotoQuiz.Data;
 using KyotoQuiz.Models;
 using KyotoQuiz.ViewModels;
 using KyotoQuiz.Enum;
+using NuGet.Common;
+using KyotoQuiz.Helpers;
 
 namespace KyotoQuiz.Controllers
 {
     public class ResultsController : Controller
     {
         private readonly KyotoQuizContext _context;
+        private readonly Random _random;
 
         private const string BindProperties = "Id,QuestionId,SelectedOrder,IsCorrect,Created,ImplementedId,GenreId,Grade,Number,Content," +
             "Description,ContentOfOrderOne,IsOrderOneAnswer,ContentOfOrderTwo,IsOrderTwoAnswer,ContentOfOrderThree,IsOrderThreeAnswer," +
             "ContentOfOrderFour,IsOrderFourAnswer";
+        private readonly List<int> Grades = new() { 1, 2, 3 };
 
         public ResultsController(KyotoQuizContext context)
         {
             ViewData["Status"] = AnswerStatus.Unanswered;
             ViewData["ShowDetail"] = false;
             _context = context;
+            _random = new Random();
         }
 
         // GET: Results
@@ -69,7 +74,7 @@ namespace KyotoQuiz.Controllers
                 return NotFound();
             }
 
-            var viewModel = new ResultViewModel(question, records);
+            var viewModel = ViewModelHelper.GetResultViewModel(question, records);
 
             ViewData["QuestionId"] = new SelectList(_context.Question, "Id", "Content");
 
@@ -108,8 +113,49 @@ namespace KyotoQuiz.Controllers
             ViewData["QuestionId"] = new SelectList(_context.Question, "Id", "Id", result.QuestionId);
             return View(result);
         }
+        
+        public IActionResult SetOption()
+        {
+            ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Content");
+            ViewData["ImplementedId"] = new SelectList(_context.Implemented, "Id", "Times");
+            ViewData["Grade"] = new SelectList(Grades);
 
+            return View();
+        }
 
+        public async Task<IActionResult> CreateRepeatablly(QuizOption option)
+        {
+            if (option.Questions == 0)
+            {
+                return RedirectToAction("SetOption");
+            }
+
+            var questions = await _context.Question
+                    .Include(q => q.Genre)
+                    .Include(q => q.Implemented)
+                    .ToListAsync(); ;
+
+            var filtered = FilterHelper.GetFiltered(questions, option);
+
+            var viewModels = new List<ResultViewModel>();
+
+            foreach(var question in filtered)
+            {
+                var records = await _context.QuestionRecord
+                    .Where(q => q.QuestionId == question.Id).ToListAsync();
+                var viewModel = ViewModelHelper.GetResultViewModel(question, records);
+                viewModels.Add(viewModel);
+            }
+
+            return View(viewModels);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateRepeatablly()
+        {
+            return View();
+        }
 
         // GET: Results/Edit/5
         public async Task<IActionResult> Edit(int? id)

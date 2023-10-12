@@ -3,7 +3,7 @@ using System.ComponentModel;
 
 namespace KyotoQuiz.ViewModels
 {
-    public class CreateQuestionViewModel : Question
+    public class QuestionViewModel : Question
     {
         [DisplayName("(ア)")]
         public string ContentOfOrderOne {  get; set; }
@@ -39,16 +39,6 @@ namespace KyotoQuiz.ViewModels
                 Implemented = Implemented,
                 Genre = Genre
             };
-        }
-
-        public bool ValidateAnswerCount()
-        {
-            var count = (IsOrderOneAnswer ? 1 : 0)
-                + (IsOrderTwoAnswer ? 1 : 0)
-                + (IsOrderThreeAnswer ? 1 : 0)
-                + (IsOrderFourAnswer ? 1 : 0);
-
-            return count == 1;
         }
 
         public QuestionRecord CreateQuestionRecord(

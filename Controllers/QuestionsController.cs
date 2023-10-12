@@ -9,6 +9,7 @@ using KyotoQuiz.Data;
 using KyotoQuiz.Models;
 using KyotoQuiz.ViewModels;
 using System.Runtime.InteropServices;
+using KyotoQuiz.Helpers;
 
 namespace KyotoQuiz.Controllers
 {
@@ -31,12 +32,12 @@ namespace KyotoQuiz.Controllers
         {
             var kyotoQuizContext = _context.Question.Include(q => q.Genre).Include(q => q.Implemented);
             var questions = await kyotoQuizContext.ToListAsync();
-            var viewModels = new List<CreateQuestionViewModel>();
+            var viewModels = new List<QuestionViewModel>();
 
             foreach(var question in questions)
             {
                 var records = await _context.QuestionRecord.Where(q => q.QuestionId == question.Id).ToListAsync();
-                var viewModel = question.ConvertToViewModel(records);
+                var viewModel = ViewModelHelper.GetQuestionViewModel(question, records);
                 await AssignValuesAsync(viewModel);
                 viewModels.Add(viewModel);
             }
@@ -54,7 +55,15 @@ namespace KyotoQuiz.Controllers
                 .Include(q => q.Genre)
                 .Include(q => q.Implemented);
             var questions = await kyotoQuizContext.ToListAsync();
-            var filtered = GetFilterdList(questions, implementedId, grade, genreId);
+
+            var option = new QuizOption()
+            {
+                ImplementedId = implementedId,
+                Grade = grade,
+                GenreId = genreId
+            };
+
+            var filtered = FilterHelper.GetFiltered(questions, option);
 
             if (!filtered.Any())
             {
@@ -65,14 +74,14 @@ namespace KyotoQuiz.Controllers
                 return View();
             }
 
-            var viewModels = new List<CreateQuestionViewModel>();
+            var viewModels = new List<QuestionViewModel>();
 
             foreach (var question in filtered)
             {
                 var records = await _context.QuestionRecord
                     .Where(q => q.QuestionId == question.Id)
                     .ToListAsync();
-                var viewModel = question.ConvertToViewModel(records);
+                var viewModel = ViewModelHelper.GetQuestionViewModel(question, records);
                 await AssignValuesAsync(viewModel);
                 viewModels.Add(viewModel);
             }
@@ -82,31 +91,6 @@ namespace KyotoQuiz.Controllers
             ViewData["Grade"] = new SelectList(Grades);
 
             return View("Index",viewModels);
-        }
-
-        private static List<Question> GetFilterdList(List<Question> questions, int implementedId, int grade, int genreId)
-        {
-            if (implementedId == -1 && grade == -1 && genreId == -1)
-            {
-                return questions;
-            }
-
-            if (implementedId != -1)
-            {
-                questions = questions.Where(q => q.ImplementedId == implementedId).ToList();
-            }
-
-            if (grade != -1)
-            {
-                questions = questions.Where(q => q.Grade == grade).ToList();
-            }
-
-            if (genreId != -1)
-            {
-                questions = questions.Where(q => q.GenreId == genreId).ToList();
-            }
-
-            return questions;
         }
 
         // GET: Questions/Details/5
@@ -142,13 +126,13 @@ namespace KyotoQuiz.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
-            [Bind(BindProperties)] CreateQuestionViewModel model)
+            [Bind(BindProperties)] QuestionViewModel model)
         {
             ModelState.Clear();
 
             model = await AssignValuesAsync(model);
 
-            if (!model.ValidateAnswerCount())
+            if (!ValidationHelper.IsValidAnswerCount(model))
             {
                 ReadyForCreateView(true);
                 return View(model);
@@ -156,7 +140,7 @@ namespace KyotoQuiz.Controllers
 
             if (ModelState.IsValid)
             {
-                var question = model.ConvertToQuestion();
+                var question = ModelHelper.GetQuestionFromViewModel(model);
                 _context.Add(question);
                 _context.SaveChanges();
 
@@ -198,7 +182,7 @@ namespace KyotoQuiz.Controllers
                 return View();
             }
 
-            var viewModels = new List<CreateQuestionViewModel>();
+            var viewModels = new List<QuestionViewModel>();
 
             using (var streamReader = new StreamReader(csvFile.OpenReadStream()))
             {
@@ -208,7 +192,7 @@ namespace KyotoQuiz.Controllers
                 foreach (var line in lines)
                 {
                     var columns = line.Split(',');
-                    var viewModel = new CreateQuestionViewModel()
+                    var viewModel = new QuestionViewModel()
                     {
 
                     };
@@ -245,7 +229,7 @@ namespace KyotoQuiz.Controllers
                 return NotFound();
             }
 
-            var viewModel = question.ConvertToViewModel(records);
+            var viewModel = ViewModelHelper.GetQuestionViewModel(question, records);
             ReadyForCreateView(false);
             return View(viewModel);
         }
@@ -257,7 +241,7 @@ namespace KyotoQuiz.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
             int id, 
-            [Bind(BindProperties)] CreateQuestionViewModel model)
+            [Bind(BindProperties)] QuestionViewModel model)
         {
             ModelState.Clear();
 
@@ -268,7 +252,7 @@ namespace KyotoQuiz.Controllers
 
             model = await AssignValuesAsync(model);
 
-            if (!model.ValidateAnswerCount())
+            if (!ValidationHelper.IsValidAnswerCount(model))
             {
                 ReadyForCreateView(true);
                 return View(model);
@@ -279,17 +263,9 @@ namespace KyotoQuiz.Controllers
                 try
                 {
                     var oldQuestion = _context.Question.FirstOrDefault(q => q.Id == id);
-                    var newQuestion = model.ConvertToQuestion();
+                    var newQuestion = ModelHelper.GetQuestionFromViewModel(model);
 
-                    if (oldQuestion != null && newQuestion != null)
-                    {
-                        oldQuestion.ImplementedId = newQuestion.ImplementedId;
-                        oldQuestion.GenreId = newQuestion.GenreId;
-                        oldQuestion.Grade = newQuestion.Grade;
-                        oldQuestion.Number = newQuestion.Number;
-                        oldQuestion.Content = newQuestion.Content;
-                        oldQuestion.Description = newQuestion.Description;
-                    }
+                    ModelHelper.UpdateQuestion(oldQuestion, newQuestion);
 
                     _context.Update(oldQuestion);
                     _context.SaveChanges();
@@ -382,7 +358,7 @@ namespace KyotoQuiz.Controllers
           return (_context.Question?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 
-        private async Task<CreateQuestionViewModel> AssignValuesAsync(CreateQuestionViewModel model)
+        private async Task<QuestionViewModel> AssignValuesAsync(QuestionViewModel model)
         {
             model.Implemented = await _context.Implemented.FirstOrDefaultAsync(i => i.Id == model.ImplementedId);
             model.Genre = await _context.Genre.FirstOrDefaultAsync(g => g.Id == model.GenreId);
@@ -393,7 +369,7 @@ namespace KyotoQuiz.Controllers
 
         private void ReadyForCreateView(
             bool haveSomeAnswer, 
-            CreateQuestionViewModel? model = null)
+            QuestionViewModel? model = null)
         {
             if (model == null)
             {
