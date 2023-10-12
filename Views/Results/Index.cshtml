@@ -4,14 +4,14 @@
     ViewData["Title"] = "解答状況";
     var total = Model.Count();
     var correct = Model.Where(m => m.IsCorrect).Count();
-    double accuracy = Math.Round(((double)correct / total * 100), 2);
+    string accuracy = Math.Round(((double)correct / total * 100), 2).ToString();
 }
 
 <h1>@ViewBag.Title</h1>
 
 <div class="alert alert-primary" role="alert">
     現在 @total 問解きました。<br>
-    現在の正答率は @accuracy.ToString() %です。
+    現在の正答率は @accuracy %です。
 </div>
 
 <!--
